@@ -1,4 +1,4 @@
-import LeadOps from "./components/LeadOps.tsx";
+import LeadOps from "./components/LeadOps;
 
 export default function Home() {
   return (
