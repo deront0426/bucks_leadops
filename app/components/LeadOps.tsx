@@ -1,40 +1,4 @@
-const BUCKET = "lead-photos"; // <-- your bucket name
-"use client";
-
-
-import { useEffect, useState } from "react";
-import { createClient } from "@supabase/supabase-js";
-
-type Lead = {
-  id: number;
-  name: string | null;
-  phone: string | null;
-  details: string | null;
-  created_at: string;
-};
-
-// Uses the env vars you set in Vercel
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL as string;
-const supabaseAnon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY as string;
-const supabase = createClient(supabaseUrl, supabaseAnon);
-
-export default function LeadOps() {
-  const [leads, setLeads] = useState<Lead[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [form, setForm] = useState({ name: "", phone: "", details: "" });
-  const [error, setError] = useState<string>("");
-
-  // Initial fetch + realtime subscription
-  useEffect(() => {
-    (async () => {
-      setLoading(true);
-      const { data, error } = await supabase
-        .from("leads")
-        .select("*")
-        .order("created_at", { ascending: false });
-      if (error) setError(error.message);
-      setLeads((data as Lead[]) || []);
-      setLoading(false);
+     setLoading(false);
     })();
 
     const channel = supabase
@@ -134,3 +98,4 @@ export default function LeadOps() {
     </div>
   );
 }
+ 
