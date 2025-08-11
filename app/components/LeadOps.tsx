@@ -1,3 +1,4 @@
+const BUCKET = "lead-photos"; // <-- your bucket name
 "use client";
 
 
