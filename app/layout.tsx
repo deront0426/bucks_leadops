@@ -1,3 +1,4 @@
+<span className="font-semibold">Bucks for Buckets — vTEST</span>
 import "./globals.css";
 import Link from "next/link";
 
