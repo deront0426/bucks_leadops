@@ -1,4 +1,4 @@
-"use client";
+  "use client";
 
 import React, { useEffect, useState } from "react";
 import { createClient } from "@supabase/supabase-js";
@@ -49,7 +49,6 @@ export default function LeadOps() {
       }
     })();
 
-    // realtime channel
     const channel = supabase
       .channel("realtime:leads")
       .on(
@@ -61,7 +60,6 @@ export default function LeadOps() {
       )
       .subscribe();
 
-    // cleanup
     return () => {
       isMounted = false;
       supabase.removeChannel(channel);
@@ -85,8 +83,7 @@ export default function LeadOps() {
         .insert([{ name: form.name, phone: form.phone }]);
 
       if (error) throw error;
-      setForm({ name: "", phone: "" });
-      // no need to manually push to state; realtime will prepend it
+      setForm({ name: "", phone: "" }); // realtime will prepend the new row
     } catch (err: any) {
       setError(err.message ?? "Failed to add lead.");
     } finally {
@@ -116,11 +113,7 @@ export default function LeadOps() {
         </button>
       </form>
 
-      {error && (
-        <div style={{ color: "red", marginBottom: 12 }}>
-          {error}
-        </div>
-      )}
+      {error && <div style={{ color: "red", marginBottom: 12 }}>{error}</div>}
 
       {loading && leads.length === 0 ? (
         <p>Loading leads…</p>
