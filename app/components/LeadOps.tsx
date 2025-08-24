@@ -1,6 +1,55 @@
-     setLoading(false);
+"use client";
+
+import React, { useEffect, useState } from "react";
+import { createClient } from "@supabase/supabase-js";
+
+// ---- types ----
+type Lead = {
+  id: string;
+  name: string | null;
+  phone: string | null;
+  created_at: string;
+};
+
+// ---- supabase client (adjust env var names if yours differ) ----
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL as string,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY as string
+);
+
+export default function LeadOps() {
+  // ---- state ----
+  const [leads, setLeads] = useState<Lead[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string>("");
+  const [form, setForm] = useState<{ name: string; phone: string }>({
+    name: "",
+    phone: ""
+  });
+
+  // ---- load initial data + subscribe to realtime ----
+  useEffect(() => {
+    let isMounted = true;
+
+    (async () => {
+      try {
+        setLoading(true);
+
+        const { data, error } = await supabase
+          .from("leads")
+          .select("*")
+          .order("created_at", { ascending: false });
+
+        if (error) throw error;
+        if (isMounted) setLeads((data as Lead[]) ?? []);
+      } catch (err: any) {
+        if (isMounted) setError(err.message ?? "Failed to load leads.");
+      } finally {
+        if (isMounted) setLoading(false);
+      }
     })();
 
+    // realtime channel
     const channel = supabase
       .channel("realtime:leads")
       .on(
@@ -12,85 +61,75 @@
       )
       .subscribe();
 
+    // cleanup
     return () => {
+      isMounted = false;
       supabase.removeChannel(channel);
     };
   }, []);
 
+  // ---- add lead ----
   async function addLead(e: React.FormEvent) {
     e.preventDefault();
     setError("");
-    if (!form.name || !form.phone) {
-      setError("Name and phone are required.");
-      return;
-    }
-    const { data, error } = await supabase
-      .from("leads")
-      .insert({
-        name: form.name,
-        phone: form.phone,
-        details: form.details || null,
-      })
-      .select()
-      .single();
 
-    if (error) {
-      setError(error.message);
+    if (!form.name || !form.phone) {
+      setError("Please provide both name and phone.");
       return;
     }
-    // Realtime will prepend it too; this keeps UI snappy
-    if (data) setLeads((prev) => [data as Lead, ...prev]);
-    setForm({ name: "", phone: "", details: "" });
+
+    try {
+      setLoading(true);
+      const { error } = await supabase
+        .from("leads")
+        .insert([{ name: form.name, phone: form.phone }]);
+
+      if (error) throw error;
+      setForm({ name: "", phone: "" });
+      // no need to manually push to state; realtime will prepend it
+    } catch (err: any) {
+      setError(err.message ?? "Failed to add lead.");
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (
-    <div className="bg-white rounded shadow p-4">
-      <h2 className="text-xl font-semibold mb-4">Incoming Leads (Supabase)</h2>
+    <div style={{ padding: 16 }}>
+      <h2>Bucks4Buckets — Lead Ops</h2>
 
-      {/* Quick add form */}
-      <form onSubmit={addLead} className="grid grid-cols-1 md:grid-cols-4 gap-2 mb-4">
+      <form onSubmit={addLead} style={{ marginBottom: 16 }}>
         <input
-          className="border rounded px-3 py-2"
           placeholder="Name"
           value={form.name}
-          onChange={(e) => setForm((s) => ({ ...s, name: e.target.value }))}
+          onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
+          style={{ marginRight: 8 }}
         />
         <input
-          className="border rounded px-3 py-2"
           placeholder="Phone"
           value={form.phone}
-          onChange={(e) => setForm((s) => ({ ...s, phone: e.target.value }))}
+          onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))}
+          style={{ marginRight: 8 }}
         />
-        <input
-          className="border rounded px-3 py-2 md:col-span-2"
-          placeholder="Details (vehicle, notes, etc.)"
-          value={form.details}
-          onChange={(e) => setForm((s) => ({ ...s, details: e.target.value }))}
-        />
-        <button className="bg-blue-600 text-white rounded px-3 py-2" type="submit">
-          Add lead
+        <button type="submit" disabled={loading}>
+          {loading ? "Saving..." : "Add Lead"}
         </button>
       </form>
 
-      {error && <div className="text-sm text-rose-600 mb-3">{error}</div>}
+      {error && (
+        <div style={{ color: "red", marginBottom: 12 }}>
+          {error}
+        </div>
+      )}
 
-      {loading ? (
-        <p>Loading…</p>
-      ) : leads.length === 0 ? (
-        <p>No leads yet.</p>
+      {loading && leads.length === 0 ? (
+        <p>Loading leads…</p>
       ) : (
         <ul>
           {leads.map((lead) => (
-            <li key={lead.id} className="border-b py-3">
-              <div className="font-medium">
-                {lead.name || "Unknown"} — {lead.phone || "No phone"}
-              </div>
-              {lead.details && (
-                <div className="text-sm text-gray-700">{lead.details}</div>
-              )}
-              <div className="text-xs text-gray-500">
-                {new Date(lead.created_at).toLocaleString()}
-              </div>
+            <li key={lead.id}>
+              <strong>{lead.name || "No name"}</strong> — {lead.phone || "No phone"}{" "}
+              <small>({new Date(lead.created_at).toLocaleString()})</small>
             </li>
           ))}
         </ul>
@@ -98,4 +137,3 @@
     </div>
   );
 }
- 
