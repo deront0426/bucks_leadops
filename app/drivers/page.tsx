@@ -1,21 +1,6 @@
 "use client";
 import AuthGate from "../components/AuthGate";
 import { useEffect, useState } from "react";
-import { createClient } from "@supabase/supabase-js";
-
-type Driver = {
-  id: string;
-  name: string;
-  phone: string;
-  region: string | null;
-  active: boolean | null;
-  created_at: string;
-};
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL as string,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY as string
-);
 
 export default function DriversPage() {
   const [drivers, setDrivers] = useState<Driver[]>([]);
