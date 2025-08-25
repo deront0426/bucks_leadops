@@ -1,12 +1,12 @@
-"use client";
-import React from "react";
+import LeadOps from "./components/LeadOps";
 
-export default function DriversPage() {
+export default function HomePage() {
   return (
     <main style={{ padding: 24 }}>
-      <h1>Drivers</h1>
-      <p>This page is under construction.</p>
-      <a href="/">← Back to Home</a>
+      <h1>Bucks4Buckets</h1>
+      <p>Click below to see the typical junk-car range.</p>
+
+      <LeadOps />
     </main>
   );
 }
