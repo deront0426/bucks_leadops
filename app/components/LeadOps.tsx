@@ -1,87 +1,53 @@
-  
-        if (isMounted) setError(err.message ?? "Failed to load leads.");
-      } finally {
-        if (isMounted) setLoading(false);
-      }
-    })();
+"use client";
 
-    const channel = supabase
-      .channel("realtime:leads")
-      .on(
-        "postgres_changes",
-        { event: "INSERT", schema: "public", table: "leads" },
-        (payload) => {
-          setLeads((prev) => [payload.new as Lead, ...prev]);
-        }
-      )
-      .subscribe();
+import React, { useState } from "react";
 
-    return () => {
-      isMounted = false;
-      supabase.removeChannel(channel);
-    };
-  }, []);
-
-  // ---- add lead ----
-  async function addLead(e: React.FormEvent) {
-    e.preventDefault();
-    setError("");
-
-    if (!form.name || !form.phone) {
-      setError("Please provide both name and phone.");
-      return;
-    }
-
-    try {
-      setLoading(true);
-      const { error } = await supabase
-        .from("leads")
-        .insert([{ name: form.name, phone: form.phone }]);
-
-      if (error) throw error;
-      setForm({ name: "", phone: "" }); // realtime will prepend the new row
-    } catch (err: any) {
-      setError(err.message ?? "Failed to add lead.");
-    } finally {
-      setLoading(false);
-    }
-  }
+export default function LeadOps() {
+  const [show, setShow] = useState(false);
 
   return (
-    <div style={{ padding: 16 }}>
-      <h2>Bucks4Buckets — Lead Ops</h2>
+    <div style={{ padding: 20 }}>
+      <button onClick={() => setShow(true)}>
+        Get Junk Car Estimate
+      </button>
 
-      <form onSubmit={addLead} style={{ marginBottom: 16 }}>
-        <input
-          placeholder="Name"
-          value={form.name}
-          onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
-          style={{ marginRight: 8 }}
-        />
-        <input
-          placeholder="Phone"
-          value={form.phone}
-          onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))}
-          style={{ marginRight: 8 }}
-        />
-        <button type="submit" disabled={loading}>
-          {loading ? "Saving..." : "Add Lead"}
-        </button>
-      </form>
+      {show && (
+        <div
+          style={{
+            position: "fixed",
+            top: 0, left: 0, right: 0, bottom: 0,
+            background: "rgba(0,0,0,0.6)",
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center"
+          }}
+        >
+          <div style={{
+            background: "#fff",
+            padding: 24,
+            borderRadius: 8,
+            textAlign: "center",
+            width: 320
+          }}>
+            <h3>Junk Car Estimate</h3>
+            <p>The average range for a junk car is <strong>$175 – $300</strong>.</p>
+            <p>Is that what you were expecting?</p>
 
-      {error && <div style={{ color: "red", marginBottom: 12 }}>{error}</div>}
-
-      {loading && leads.length === 0 ? (
-        <p>Loading leads…</p>
-      ) : (
-        <ul>
-          {leads.map((lead) => (
-            <li key={lead.id}>
-              <strong>{lead.name || "No name"}</strong> — {lead.phone || "No phone"}{" "}
-              <small>({new Date(lead.created_at).toLocaleString()})</small>
-            </li>
-          ))}
-        </ul>
+            <div style={{ marginTop: 16 }}>
+              <button
+                onClick={() => { alert("You clicked Yes"); setShow(false); }}
+                style={{ marginRight: 10 }}
+              >
+                Yes
+              </button>
+              <button
+                onClick={() => { alert("You clicked No"); setShow(false); }}
+              >
+                No
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
