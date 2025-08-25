@@ -1,48 +1,4 @@
-  "use client";
-
-import React, { useEffect, useState } from "react";
-import { createClient } from "@supabase/supabase-js";
-
-// ---- types ----
-type Lead = {
-  id: string;
-  name: string | null;
-  phone: string | null;
-  created_at: string;
-};
-
-// ---- supabase client (adjust env var names if yours differ) ----
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL as string,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY as string
-);
-
-export default function LeadOps() {
-  // ---- state ----
-  const [leads, setLeads] = useState<Lead[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string>("");
-  const [form, setForm] = useState<{ name: string; phone: string }>({
-    name: "",
-    phone: ""
-  });
-
-  // ---- load initial data + subscribe to realtime ----
-  useEffect(() => {
-    let isMounted = true;
-
-    (async () => {
-      try {
-        setLoading(true);
-
-        const { data, error } = await supabase
-          .from("leads")
-          .select("*")
-          .order("created_at", { ascending: false });
-
-        if (error) throw error;
-        if (isMounted) setLeads((data as Lead[]) ?? []);
-      } catch (err: any) {
+  
         if (isMounted) setError(err.message ?? "Failed to load leads.");
       } finally {
         if (isMounted) setLoading(false);
