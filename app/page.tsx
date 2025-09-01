@@ -14,6 +14,8 @@ export default function Page() {
   const [loading, setLoading] = useState(false);
   const [availableModels, setAvailableModels] = useState<string[]>([]);
   const audioRef = useRef<HTMLAudioElement>(null);
+  const [dragY, setDragY] = useState(0);
+  const [dragging, setDragging] = useState(false);
 
   const fallbackWeights: Record<string, number> = {
     "Dodge Intrepid": 3000,
@@ -47,8 +49,7 @@ export default function Page() {
       const data = JSON.parse(jsonText);
       const models = data.Trims.map((t: any) => t.model);
       setAvailableModels(models);
-    } catch (err) {
-      console.warn("Failed to fetch models");
+    } catch {
       setAvailableModels([]);
     }
   };
@@ -58,10 +59,7 @@ export default function Page() {
   }, [make, year]);
 
   const handleModelChange = (input: string) => {
-    if (!availableModels.length) {
-      setSuggestion("");
-      return;
-    }
+    if (!availableModels.length) return setSuggestion("");
     let closest = "";
     let minDistance = Infinity;
     availableModels.forEach((m) => {
@@ -87,9 +85,7 @@ export default function Page() {
         (t: any) => t.model.toLowerCase() === model.toLowerCase()
       );
       if (match && match.weight_kg) return parseInt(match.weight_kg) * 2.20462;
-    } catch (err) {
-      console.warn("API failed, using fallback");
-    }
+    } catch {}
     return fallbackWeights[`${make} ${model}`] || 3500;
   };
 
@@ -107,7 +103,6 @@ export default function Page() {
       audioRef.current.play();
     }
 
-    // Count-up animation
     let start = 0;
     const increment = Math.ceil(calculatedEstimate / 50);
     const counter = setInterval(() => {
@@ -123,9 +118,31 @@ export default function Page() {
     setTimeout(() => setModalOpen(false), 5000);
   };
 
+  const handleTouchStart = (e: React.TouchEvent) => {
+    setDragging(true);
+    setDragY(e.touches[0].clientY);
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (!dragging) return;
+    const currentY = e.touches[0].clientY;
+    const diff = currentY - dragY;
+    const modal = document.getElementById("modal-content");
+    if (modal && diff > 0) modal.style.transform = `translateY(${diff}px)`;
+  };
+
+  const handleTouchEnd = () => {
+    setDragging(false);
+    const modal = document.getElementById("modal-content");
+    if (!modal) return;
+    const transform = parseInt(modal.style.transform.replace("translateY(", "").replace("px)", "")) || 0;
+    if (transform > 150) setModalOpen(false);
+    else modal.style.transform = `translateY(0px)`;
+  };
+
   return (
     <>
-      {/* ===== Animated Driving Background ===== */}
+      {/* Video Background */}
       <div className="fixed inset-0 z-0 overflow-hidden">
         <video
           autoPlay
@@ -140,13 +157,19 @@ export default function Page() {
         </video>
       </div>
 
-      {/* ===== MODAL ===== */}
+      {/* Modal */}
       {modalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm animate-fadeIn">
-          <div className="relative w-11/12 max-w-md rounded-3xl overflow-hidden shadow-2xl border border-yellow-400 border-opacity-50 transform animate-scaleUp">
-            <div className="relative z-10 bg-black/70 p-10 text-center rounded-3xl">
+          <div
+            id="modal-content"
+            className="relative w-11/12 max-w-md sm:max-w-lg md:max-w-xl rounded-3xl overflow-hidden shadow-2xl border border-yellow-400 border-opacity-50 transform animate-scaleUp"
+            onTouchStart={handleTouchStart}
+            onTouchMove={handleTouchMove}
+            onTouchEnd={handleTouchEnd}
+          >
+            <div className="relative z-10 bg-black/70 p-6 sm:p-10 text-center rounded-3xl">
               <span
-                className="absolute top-4 right-4 text-white text-2xl font-bold cursor-pointer hover:text-red-500 transition-colors"
+                className="absolute top-3 right-3 sm:top-4 sm:right-4 text-white text-2xl font-bold cursor-pointer hover:text-red-500 transition-colors"
                 onClick={() => setModalOpen(false)}
               >
                 &times;
@@ -154,15 +177,15 @@ export default function Page() {
               <img
                 src="https://i.imgur.com/yourlogo.png"
                 alt="Bucks for Buckets"
-                className="mx-auto mb-4 w-28"
+                className="mx-auto mb-3 sm:mb-4 w-20 sm:w-28"
               />
-              <h2 className="text-white text-2xl font-bold mb-4">
+              <h2 className="text-white text-xl sm:text-2xl font-bold mb-2 sm:mb-4">
                 Your Junk Car Estimate
               </h2>
-              <p className="text-yellow-400 text-4xl font-extrabold mb-2 animate-glow">
+              <p className="text-yellow-400 text-3xl sm:text-4xl font-extrabold mb-1 sm:mb-2 animate-glow">
                 ${displayEstimate}
               </p>
-              <p className="text-yellow-300 text-base animate-pulse">
+              <p className="text-yellow-300 text-sm sm:text-base animate-pulse">
                 Your offer may vary ±$20
               </p>
               <audio
@@ -175,16 +198,16 @@ export default function Page() {
         </div>
       )}
 
-      {/* ===== FORM ===== */}
+      {/* Form */}
       <form
         onSubmit={handleSubmit}
-        className="relative z-10 flex flex-col gap-3 max-w-md mx-auto mt-10 p-6 bg-black/30 rounded-xl backdrop-blur-md"
+        className="relative z-10 flex flex-col gap-3 max-w-md sm:max-w-lg mx-auto mt-10 p-4 sm:p-6 bg-black/30 rounded-xl backdrop-blur-md"
       >
         <input
           type="text"
           placeholder="Make"
           required
-          className="p-3 rounded-lg border border-gray-300"
+          className="p-3 rounded-lg border border-gray-300 w-full text-sm sm:text-base"
           value={make}
           onChange={(e) => setMake(e.target.value)}
         />
@@ -192,7 +215,7 @@ export default function Page() {
           type="text"
           placeholder="Model"
           required
-          className="p-3 rounded-lg border border-gray-300"
+          className="p-3 rounded-lg border border-gray-300 w-full text-sm sm:text-base"
           value={model}
           onChange={(e) => {
             setModel(e.target.value);
@@ -201,7 +224,7 @@ export default function Page() {
         />
         {suggestion && (
           <p
-            className="text-yellow-400 cursor-pointer"
+            className="text-yellow-400 cursor-pointer text-sm sm:text-base"
             onClick={() => {
               setModel(suggestion.replace("Did you mean: ", ""));
               setSuggestion("");
@@ -215,54 +238,33 @@ export default function Page() {
           type="number"
           placeholder="Year"
           required
-          className="p-3 rounded-lg border border-gray-300"
+          className="p-3 rounded-lg border border-gray-300 w-full text-sm sm:text-base"
           value={year}
           onChange={(e) => setYear(e.target.value)}
         />
         <button
           type="submit"
-          className="bg-gradient-to-r from-orange-500 to-red-500 text-white p-3 rounded-lg font-bold hover:scale-105 transition-transform"
+          className="bg-gradient-to-r from-orange-500 to-red-500 text-white p-3 rounded-lg font-bold hover:scale-105 transition-transform text-sm sm:text-base"
         >
           {loading ? "Loading..." : "Get Estimate"}
         </button>
       </form>
 
-      {/* ===== LeadOps Component ===== */}
+      {/* LeadOps */}
       <LeadOps />
 
-      {/* ===== Tailwind Animations ===== */}
       <style jsx>{`
-        @keyframes fadeIn {
-          from { opacity: 0; }
-          to { opacity: 1; }
-        }
-        .animate-fadeIn {
-          animation: fadeIn 0.5s ease-out forwards;
-        }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        .animate-fadeIn { animation: fadeIn 0.5s ease-out forwards; }
 
-        @keyframes scaleUp {
-          0% { transform: scale(0.8); opacity: 0; }
-          100% { transform: scale(1); opacity: 1; }
-        }
-        .animate-scaleUp {
-          animation: scaleUp 0.6s ease-out forwards;
-        }
+        @keyframes scaleUp { 0% { transform: scale(0.8); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+        .animate-scaleUp { animation: scaleUp 0.6s ease-out forwards; }
 
-        @keyframes glow {
-          0% { text-shadow: 0 0 10px #fff, 0 0 20px #ffdd00; }
-          100% { text-shadow: 0 0 20px #fff, 0 0 40px #ffdd00; }
-        }
-        .animate-glow {
-          animation: glow 1.5s infinite alternate;
-        }
+        @keyframes glow { 0% { text-shadow: 0 0 10px #fff, 0 0 20px #ffdd00; } 100% { text-shadow: 0 0 20px #fff, 0 0 40px #ffdd00; } }
+        .animate-glow { animation: glow 1.5s infinite alternate; }
 
-        @keyframes pulse {
-          0% { opacity: 0.7; }
-          100% { opacity: 1; }
-        }
-        .animate-pulse {
-          animation: pulse 1s infinite alternate;
-        }
+        @keyframes pulse { 0% { opacity: 0.7; } 100% { opacity: 1; } }
+        .animate-pulse { animation: pulse 1s infinite alternate; }
       `}</style>
     </>
   );
