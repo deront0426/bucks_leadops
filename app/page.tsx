@@ -11,13 +11,7 @@ export default function HomePage() {
     </main>
   );
 }
-return (
-  <>
-    {/* Modal goes here */}
-    {modalOpen && (
-      <div className="fixed inset-0 z-50 backdrop-blur-sm flex items-center justify-center">
-        ...
-      </div>
+
     )}
 
     {/* Your existing form stays here exactly as it is */}
