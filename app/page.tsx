@@ -1,69 +1,10 @@
-"use client";
+import LeadOps from "./components/LeadOps";
 
-export default function Page() {
+export default function Home() {
   return (
-    <main className="p-6 max-w-md mx-auto">
-      <h1 className="text-2xl font-bold mb-4">Bucks4Buckets</h1>
-      <p className="mb-6">Fill out the form below and we’ll get back to you!</p>
-
-      <form
-        action="https://formspree.io/f/your-form-id"
-        method="POST"
-        className="flex flex-col gap-4"
-      >
-        <input
-          type="text"
-          name="name"
-          placeholder="Your Name"
-          required
-          className="p-3 rounded-lg border border-gray-300"
-        />
-
-        <input
-          type="email"
-          name="email"
-          placeholder="Your Email"
-          required
-          className="p-3 rounded-lg border border-gray-300"
-        />
-
-        <input
-          type="text"
-          name="make"
-          placeholder="Car Make"
-          required
-          className="p-3 rounded-lg border border-gray-300"
-        />
-
-        <input
-          type="text"
-          name="model"
-          placeholder="Car Model"
-          required
-          className="p-3 rounded-lg border border-gray-300"
-        />
-
-        <input
-          type="number"
-          name="year"
-          placeholder="Car Year"
-          required
-          className="p-3 rounded-lg border border-gray-300"
-        />
-
-        <textarea
-          name="message"
-          placeholder="Additional Info (optional)"
-          className="p-3 rounded-lg border border-gray-300"
-        />
-
-        <button
-          type="submit"
-          className="bg-orange-500 text-white p-3 rounded-lg font-bold hover:scale-105 transition-transform"
-        >
-          Submit
-        </button>
-      </form>
+    <main className="min-h-screen p-6 bg-gray-100">
+      <h1 className="text-3xl font-bold mb-6">Bucks for Buckets — Lead Ops Dashboard</h1>
+      <LeadOps />
     </main>
   );
 }
