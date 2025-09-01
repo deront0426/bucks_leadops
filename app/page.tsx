@@ -1,3 +1,4 @@
+import { useState, useRef } from 'react';
 import LeadOps from "./components/LeadOps";
 
 export default function HomePage() {
